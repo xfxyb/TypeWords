@@ -27,50 +27,15 @@
           content="Type Words：在线英语练习平台，支持单词跟打、文章练习，提升打字速度与英语水平。">
     <meta name="twitter:image" content="https://2study.top/favicon.png">
 
-    <!--用于百度站长验证    -->
-    <meta name="baidu-site-verification" content="codeva-Kw33xFT3p2"/>
-
     <script>
-      ;(function () {
-        var src = '//cdn.jsdelivr.net/npm/eruda';
-        if (!/eruda=true/.test(window.location) && localStorage.getItem('active-eruda') != 'true') return;
-        document.write('<scr' + 'ipt src="' + src + '"></scr' + 'ipt>');
-        document.write('<scr' + 'ipt>eruda.init();</scr' + 'ipt>');
-      })();
-    </script>
-    <script>
-      if (!location.href.includes('localhost')
-        && !location.href.includes('192.168')
-        && !location.href.includes('172.16')
-        && !location.href.includes('10.0')
-      ) {
-        var _hmt = _hmt || [];
-        (function () {
-          var hm = document.createElement("script");
-          hm.src = "https://hm.baidu.com/hm.js?3dae52fcd5375a19905462e4ad3eb54e";
-          var s = document.getElementsByTagName("script")[0];
-          s.parentNode.insertBefore(hm, s);
-        })();
-
-        (function () {
-          var umami = document.createElement("script");
-          umami.src = 'https://2study.top/s.js'
-          if (location.href.includes('vercel') || location.href.includes('tw')) {
-            umami.setAttribute("data-website-id", "f630eefc-8b91-4e20-b890-106e6c7bcc10");
-          } else {
-            umami.setAttribute("data-website-id", "160308c9-7900-4b1d-a0b1-c3b25a9530f6");
-          }
-          var s = document.getElementsByTagName("script")[0];
-          s.parentNode.insertBefore(umami, s);
-        })();
-
-        (function () {
-          var umami2 = document.createElement("script");
-          umami2.src = 'https://stat.2study.top/script.js'
-          umami2.setAttribute("data-website-id", "4d728ae3-5393-4efe-81dc-30dcb4f33c00");
-          var s = document.getElementsByTagName("script")[0];
-          s.parentNode.insertBefore(umami2, s);
-        })();
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js').then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }).catch(error => {
+            console.log('ServiceWorker registration failed: ', error);
+          });
+        });
       }
     </script>
     <script>
@@ -290,7 +255,7 @@
 
         <div class="center justify-center flex-col gap-2 w-full mb-4">
             <a href="https://skywork.ai/p/GrXQb4" class="w-60vw" target="_blank">
-                <img src="https://2study.top/skywork-ai.png"
+                <img src="/skywork-ai.png"
                      alt="Skywork.AI"
                      class="w-full rounded-lg"></a>
             <span>Skywork.AI:<a href="https://skywork.ai/p/GrXQb4" class="color-blue!" target="_blank">10 tasks in 1 hour, not 10 hours →Limited free spots: 127 left</a></span>
@@ -461,7 +426,7 @@
                 加入我们的用户社群后，您可以与我们的开发团队进行沟通，分享您的使用体验和建议，帮助我们改进产品，同时也能够及时了解我们的最新动态和更新内容。
             </span>
             <div class="center mt-4">
-                <img src="https://2study.top/wechat.png" alt="微信群二维码" class="w-60 rounded-lg">
+                <img src="/wechat.png" alt="微信群二维码" class="w-60 rounded-lg">
             </div>
         </div>
     </div>
@@ -479,7 +444,7 @@
         <div class="dialog-body">
             <span>关注小红书后，您可以获得开发团队的最新动态和更新内容，反馈您的使用体验和建议，帮助我们改进产品，同时也能够及时了解我们的最新动态和更新内容。</span>
             <div class="center mt-4">
-                <img src="https://2study.top/xhs.png" alt="小红书二维码" class="w-60 rounded-lg">
+                <img src="/xhs.png" alt="小红书二维码" class="w-60 rounded-lg">
             </div>
         </div>
     </div>

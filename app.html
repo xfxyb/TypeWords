@@ -32,14 +32,6 @@
     <meta name="baidu-site-verification" content="codeva-Kw33xFT3p2"/>
 
     <script>
-      ;(function () {
-        var src = '//cdn.jsdelivr.net/npm/eruda';
-        if (!/eruda=true/.test(window.location) && localStorage.getItem('active-eruda') != 'true') return;
-        document.write('<scr' + 'ipt src="' + src + '"></scr' + 'ipt>');
-        document.write('<scr' + 'ipt>eruda.init();</scr' + 'ipt>');
-      })();
-    </script>
-    <script>
       if (!location.href.includes('localhost')
         && !location.href.includes('192.168')
         && !location.href.includes('172.16')
@@ -78,16 +70,5 @@
 <body>
 <div id="app"></div>
 <script type="module" src="/src/main.ts"></script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js').then(registration => {
-        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-      }).catch(error => {
-        console.log('ServiceWorker registration failed: ', error);
-      });
-    });
-  }
-</script>
 </body>
 </html>
