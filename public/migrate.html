@@ -75,7 +75,13 @@
     }, event.origin);
 
     log("已发送迁移数据");
+    // 自动关闭窗口（延迟 500ms）
+    setTimeout(() => {
+      window.close();
+    }, 500);
   });
+
+
 </script>
 </body>
 </html>
