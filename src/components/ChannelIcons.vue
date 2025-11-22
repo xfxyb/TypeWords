@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { APP_NAME, GITHUB, Host, Origin } from "@/config/env.ts";
+import { APP_NAME, GITHUB, Origin } from "@/config/env.ts";
 import BaseIcon from "@/components/BaseIcon.vue";
-import { defineAsyncComponent, onMounted, ref, watch } from "vue";
+import { defineAsyncComponent, watch } from "vue";
 import { usePracticeStore } from "@/stores/practice.ts";
 import { useBaseStore } from "@/stores/base.ts";
 import { msToHourMinute } from "@/utils";
 import dayjs from "dayjs";
-import BaseButton from "@/components/BaseButton.vue";
 import Toast from "@/components/base/toast/Toast.ts";
 import { useUserStore } from "@/stores/user.ts";
+import Progress from "@/components/base/Progress.vue";
+import { snapdom } from "@zumer/snapdom";
 
 const Dialog = defineAsyncComponent(() => import('@/components/dialog/Dialog.vue'))
 
@@ -19,14 +20,12 @@ const userStore = useUserStore()
 let showWechatDialog = $ref(false)
 let showXhsDialog = $ref(false)
 let showQQDialog = $ref(false)
-let showShareImageDialog = $ref(false)
-let isGeneratingImage = $ref(false)
-let generatedImageUrl = $ref<string | null>(null)
+let showShareDialog = $ref(false)
+let posterEl = $ref<HTMLDivElement | null>(null)
 
 // 计算学习统计数据
 const studyStats = $computed(() => {
   const accuracyRate = practiceStore.total === 0 ? 100 : Math.round(((practiceStore.total - practiceStore.wrong) / practiceStore.total) * 100)
-  const studyTime = msToHourMinute(practiceStore.spend).replace('小时', 'h ').replace('分钟', 'm')
 
   return {
     total: practiceStore.total,
@@ -35,241 +34,102 @@ const studyStats = $computed(() => {
     wrong: practiceStore.wrong,
     correct: practiceStore.total - practiceStore.wrong,
     accuracy: accuracyRate,
-    time: studyTime,
+    time: msToHourMinute(practiceStore.spend),
     date: dayjs().format('MM月DD日'),
     dictionary: baseStore.sdict.name || '未知词书'
   }
 })
 
 // 监听对话框打开事件，自动生成图片
-watch(() => showShareImageDialog, (newVal) => {
-  if (newVal && !generatedImageUrl) {
-    generateShareImage()
+watch(() => showShareDialog, (newVal) => {
+  if (newVal) {
   }
 })
 
-// 生成分享图片
-async function generateShareImage() {
-  if (isGeneratingImage || generatedImageUrl) return
-
-  isGeneratingImage = true
-
-  try {
-    // 创建canvas元素
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-
-    // 设置尺寸为1.3倍高度比例 (宽度720，高度936)
-    const width = 720
-    const height = Math.round(width * 1.3)
-
-    // let canvasRect = canvas.getBoundingClientRect()
-    // let {width, height} = canvasRect
-    let dpr = window.devicePixelRatio
-    if (dpr) {
-      canvas.style.width = width + "px"
-      canvas.style.height = height + "px"
-      canvas.height = height * dpr
-      canvas.width = width * dpr
-      ctx.scale(dpr, dpr)
-    }
-
-    // canvas.width = width
-    // canvas.height = height
-
-    if (!ctx) return
-
-    // 创建灰黑色渐变背景
-    const gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, '#1f2937')
-    gradient.addColorStop(1, '#111827')
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
-
-
-    // 设置文字样式
-    ctx.fillStyle = '#ffffff'
-    ctx.textAlign = 'left'
-
-    ctx.font = '24px Arial'
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
-    ctx.fillText(dayjs().format('YYYY年MM月DD日'), width * 0.05, height * 0.08)
-
-    // 右上角标签
-    ctx.textAlign = 'right'
-    ctx.font = '24px Arial'
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-    ctx.fillText('Type Words | 英语学习', width * 0.95, height * 0.08)
-
-    // 右上角标签
-    ctx.textAlign = 'left'
-    ctx.font = '36px Arial'
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-    ctx.fillText(`我在 ${APP_NAME} 学习了${studyStats.time}`, width * 0.05, height * 0.18)
-
-    // 统计数据区域 (三个圆角矩形)
-    const statsY = height * 0.25
-    const statWidth = width * 0.25
-    const statHeight = height * 0.12
-    const statSpacing = width * 0.05
-
-    const stats = [
-      {label: '正确率', value: studyStats.accuracy + '%', color: '#f59e0b'},
-      {label: '新词', value: studyStats.newWords, color: '#60a5fa'},
-      {label: '复习', value: studyStats.review, color: '#34d399'}
-    ]
-
-    // stats.forEach((stat, index) => {
-    //   const x = width * 0.1 + index * (statWidth + statSpacing)
-    //   const y = statsY
-    //
-    //   // 绘制圆角矩形背景
-    //   ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
-    //   roundRect(ctx, x, y, statWidth, statHeight, 15)
-    //   ctx.fill()
-    //
-    //   // 数值
-    //   ctx.fillStyle = '#ffffff'
-    //   ctx.font = 'bold 24px Arial'
-    //   ctx.textAlign = 'center'
-    //   ctx.fillText(stat.value.toString(), x + statWidth / 2, y + statHeight * 0.4)
-    //
-    //   // 标签
-    //   ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
-    //   ctx.font = '12px Arial'
-    //   ctx.fillText(stat.label, x + statWidth / 2, y + statHeight * 0.7)
-    // })
-
-    // 励志语句
-    // ctx.textAlign = 'center'
-    // ctx.fillStyle = '#ffffff'
-    // ctx.font = 'italic 20px Arial'
-    // ctx.fillText('Keep going, never give up!', width / 2, height * 0.45)
-    //
-    // ctx.font = '16px Arial'
-    // ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-    // ctx.fillText('坚持就是胜利', width / 2, height * 0.5)
-
-    // 底部品牌信息
-    const bottomY = height * 0.65
-    const brandX = width * 0.1
-
-
-    ctx.textAlign = 'left'
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 24px Arial'
-    ctx.fillText(APP_NAME, brandX, bottomY)
-
-    ctx.font = '24px Arial'
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-    ctx.fillText('词文记 - 高效英语学习', brandX, bottomY + 30)
-    ctx.fillText(Host, brandX, bottomY + 55)
-
-    // 二维码区域
-    const qrX = width * 0.75
-    const qrY = bottomY - 10
-
-    // 二维码背景
-    ctx.fillStyle = '#ffffff'
-    roundRect(ctx, qrX - 5, qrY - 5, 50, 50, 5)
-    ctx.fill()
-
-    // 绘制简单二维码
-    ctx.fillStyle = '#000000'
-    const moduleSize = 2
-    for (let row = 0; row < 20; row++) {
-      for (let col = 0; col < 20; col++) {
-        if (Math.random() > 0.5) {
-          ctx.fillRect(qrX + col * moduleSize, qrY + row * moduleSize, moduleSize, moduleSize)
-        }
-      }
-    }
-
-    // 将canvas转换为图片
-    const imageUrl = canvas.toDataURL('image/png', 1.0)
-    generatedImageUrl = imageUrl
-
-  } catch (error) {
-    console.error('生成图片失败:', error)
-    alert('生成图片失败，请重试')
-  } finally {
-    isGeneratingImage = false
-  }
-}
-
 // 复制图片到剪贴板
 async function copyImageToClipboard() {
-  if (!generatedImageUrl) return
-
   try {
-    const response = await fetch(generatedImageUrl)
-    const blob = await response.blob()
+    const blob = await snapdom.toBlob(posterEl, {scale: 2, type: 'png'})
+    if (!blob) throw new Error('capture failed')
 
-    if (navigator.clipboard && window.ClipboardItem) {
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          'image/png': blob
-        })
-      ])
+    if (navigator.clipboard && (window as any).ClipboardItem) {
+      await navigator.clipboard.write([new (window as any).ClipboardItem({[blob.type || 'image/png']: blob})])
       Toast.success('图片已复制到剪贴板！')
     } else {
-      // 降级方案：下载图片
-      downloadImage()
+      await downloadImage()
     }
   } catch (error) {
-    console.error('复制失败:', error)
-    // 降级方案：下载图片
-    downloadImage()
+    Toast.error('复制失败！')
+    await downloadImage()
   }
 }
 
 // 下载图片
-function downloadImage() {
-  if (!generatedImageUrl) return
-
-  const link = document.createElement('a')
-  link.download = `${APP_NAME} 分享_${studyStats.date}_${studyStats.dictionary}.png`
-  link.href = generatedImageUrl
-  link.click()
+async function downloadImage() {
+  snapdom.download(posterEl, {scale: 2})
 }
+
+let imgIndex = $ref(Math.floor(Math.random() * 10))
 
 // 切换背景
 function changeBackground() {
-  // 这里可以实现背景切换逻辑
-  console.log('切换背景')
+  const newIndex = Math.floor(Math.random() * 9) // 0-8
+  imgIndex = newIndex >= imgIndex ? newIndex + 1 : newIndex
 }
 
-// 绘制圆角矩形辅助函数
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-  ctx.beginPath()
-  ctx.moveTo(x + radius, y)
-  ctx.lineTo(x + width - radius, y)
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius)
-  ctx.lineTo(x + width, y + height - radius)
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
-  ctx.lineTo(x + radius, y + height)
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius)
-  ctx.lineTo(x, y + radius)
-  ctx.quadraticCurveTo(x, y, x + radius, y)
-  ctx.closePath()
-}
+// 计算学习进度百分比
+const studyProgress = $computed(() => {
+  if (!baseStore.sdict.length) return 0
+  return Math.round((baseStore.sdict.lastLearnIndex / baseStore.sdict.length) * 100)
+})
 
-onMounted(generateShareImage)
+const sentence = $computed(() => {
+  let list = [
+    {en: 'Actions speak louder than words.', cn: '行动胜于言语'},
+    {en: 'Keep going, never give up!', cn: '坚持就是胜利'},
+    {en: 'Where there\'s a will, there\'s a way.', cn: '有志者事竟成'},
+    {en: 'Every cloud has a silver lining.', cn: '黑暗中总有一线光明'},
+    {en: 'Time heals all wounds.', cn: '时间能治愈一切创伤'},
+    {en: 'Never say die.', cn: '永不言败'},
+    {en: 'The best is yet to come.', cn: '最好的尚未到来'},
+    {en: 'Believe you can and you\'re halfway there.', cn: '相信你自己，你已经成功了一半'},
+    {en: 'No pain, no gain.', cn: '没有付出就没有收获'},
+    {en: 'Dream big and dare to fail.', cn: '大胆梦想，勇于失败'},
+    {en: 'Home is where the heart is.', cn: '心在哪里，家就在哪里'},
+    {en: 'Knowledge is power.', cn: '知识就是力量'},
+    {en: 'Practice makes perfect.', cn: '熟能生巧'},
+    {en: 'When in Rome, do as the Romans do.', cn: '入乡随俗'},
+    {en: 'Just do it.', cn: '只管去做'},
+    {en: 'So far, so good.', cn: '到目前为止，一切还好'},
+    {en: 'The early bird catches the worm.', cn: '早起的鸟儿有虫吃'},
+    {en: 'Every day is a new beginning.', cn: '每一天都是新的开始'},
+    {en: 'Success is a journey, not a destination.', cn: '成功是旅程，不是终点'},
+    {en: 'Your only limit is your mind.', cn: '你唯一的限制是你的思维'},
+    {en: 'A friend in need is a friend indeed.', cn: '患难见真情'},
+    {en: 'Silence is golden.', cn: '沉默是金'},
+    {en: 'Let bygones be bygones.', cn: '让过去的成为过去'},
+    {en: 'Keep calm and carry on.', cn: '保持冷静，继续前进'},
+    {en: 'Live and learn.', cn: '活到老，学到老'},
+    {en: 'Mistakes are proof that you are trying.', cn: '错误证明你在努力尝试'},
+    {en: 'Better late than never.', cn: '迟做总比不做好'},
+    {en: 'Be the change you wish to see in the world.', cn: '成为你希望在世界上看到的改变'},
+    {en: 'The journey of a thousand miles begins with a single step.', cn: '千里之行，始于足下'},
+    {en: 'When one door closes, another opens.', cn: '当一扇门关闭时，另一扇会打开'},
+  ]
+  return list[Math.floor(Math.random() * list.length)]
+})
+
 </script>
 
 <template>
   <div class="flex-col center gap-1">
     <!-- 分享学习总结按钮 -->
-    <BaseIcon @click="showShareImageDialog = true"
+    <BaseIcon @click="showShareDialog = true"
               class="cursor-pointer hover:scale-110 transition-transform duration-200">
       <IconFluentShare20Regular class="text-blue-500 hover:text-blue-600"/>
     </BaseIcon>
 
-    <a
-        :href="GITHUB"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="GITHUB 项目地址">
+    <a :href="GITHUB" target="_blank" rel="noreferrer" aria-label="GITHUB 项目地址">
       <BaseIcon>
         <IconSimpleIconsGithub/>
       </BaseIcon>
@@ -285,21 +145,13 @@ onMounted(generateShareImage)
       <IconSimpleIconsXiaohongshu class="color-red-500"/>
     </BaseIcon>
 
-    <a
-        href="https://x.com/typewords2"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="关注我的 X 账户 typewords2">
+    <a href="https://x.com/typewords2" target="_blank" rel="noreferrer" aria-label="关注我的 X 账户 typewords2">
       <BaseIcon>
         <IconRiTwitterFill class="color-blue"/>
       </BaseIcon>
     </a>
 
-    <a
-        href="mailto:zyronon@163.com"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="发送邮件到 zyronon@163.com">
+    <a href="mailto:zyronon@163.com" target="_blank" rel="noreferrer" aria-label="发送邮件到 zyronon@163.com">
       <BaseIcon>
         <IconMaterialSymbolsMail class="color-blue"/>
       </BaseIcon>
@@ -308,84 +160,80 @@ onMounted(generateShareImage)
 
   <!-- 学习总结分享图片生成对话框 -->
   <Dialog
-      title="分享"
-      :close-on-click-bg="true"
-      @close="generatedImageUrl = null"
-      custom-class="!max-w-4xl !w-auto">
+      v-model="showShareDialog"
+      title="分享" :close-on-click-bg="true" custom-class="!max-w-4xl !w-auto">
     <div class="flex min-w-160 max-w-200 p-6 pt-0 gap-space">
       <!-- 左侧：海报预览区域 -->
-      <div class="flex-1 border-r border-gray-200">
-        <!-- 海报预览 -->
-        <div v-if="generatedImageUrl" class="relative">
-          <img
-              :src="generatedImageUrl"
-              alt="学习总结海报"
-              class="w-full h-auto rounded-xl shadow-lg">
-        </div>
+      <div ref="posterEl" class="flex-1 border-r border-gray-200 bg-gray-100 rounded-xl  overflow-hidden relative">
+        <div class="flex p-5 gap-space flex-col justify-between relative z-2 color-white h-full box-border">
+          <div class="flex flex-col flex-1 space-y-3">
+            <!-- 顶部用户信息 -->
+            <div class="flex items-center">
+              <div v-if="userStore.user?.username"
+                   class="w-12 h-12 bg-gray-600 rounded-full mr-3 flex items-center justify-center">
+                <IconSimpleIconsGithub class="w-6 h-6 text-white"/>
+              </div>
+              <div>
+                <div class="font-semibold text-lg">{{ userStore.user?.username }}</div>
+                <div class="">{{ dayjs().format('YYYY年MM月DD日') }}</div>
+              </div>
+              <div class="ml-auto text-xs">
+                Type Words | 英语学习
+              </div>
+            </div>
 
-        <!-- 默认预览状态 -->
-        <div v-else
-             class="w-80 h-104 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 text-white relative overflow-hidden">
-          <!-- 背景装饰 -->
-          <div class="absolute top-4 right-4 w-16 h-16 bg-white bg-opacity-10 rounded-full"></div>
-          <div class="absolute bottom-8 left-8 w-12 h-12 bg-white bg-opacity-5 rounded-full"></div>
+            <div class="bg-gray-900/30 py-4 center flex-col rounded-2xl">
+              <div class="text-center mb-2 text-xl">
+                我在 {{ APP_NAME }} 学习了 {{ studyStats.time }}
+              </div>
+              <!-- Progress Overview -->
+              <div class="w-90/100 flex items-center gap-space">
+                <div class="shrink-0">进度</div>
+                <Progress :percentage="studyProgress" size="normal"/>
+              </div>
+            </div>
 
-          <!-- 顶部用户信息 -->
-          <div class="flex items-center mb-6">
-            <div class="w-12 h-12 bg-gray-600 rounded-full mr-3 flex items-center justify-center">
-              <IconSimpleIconsGithub class="w-6 h-6 text-white"/>
+            <!-- 统计数据 -->
+            <div class="grid grid-cols-3 gap-4">
+              <div class="stat-card">
+                <div class="text-2xl font-bold">{{ studyStats.accuracy }}%</div>
+                <div class="text-base">正确率</div>
+              </div>
+              <div class="stat-card">
+                <div class="text-2xl font-bold">{{ studyStats.newWords }}</div>
+                <div class="text-base">新词</div>
+              </div>
+              <div class="stat-card">
+                <div class="text-2xl font-bold">{{ studyStats.review }}</div>
+                <div class="text-base">复习</div>
+              </div>
             </div>
-            <div>
-              <div class="font-semibold text-lg">{{ baseStore.user?.name || '学习者' }}</div>
-              <div class="text-gray-300 text-sm">{{ dayjs().format('YYYY年MM月DD日') }}</div>
-            </div>
-            <div class="ml-auto text-xs text-gray-300">
-              Type Words | 英语学习
-            </div>
-          </div>
 
-          <!-- 统计数据 -->
-          <div class="grid grid-cols-3 gap-4 mb-8">
-            <div class="text-center">
-              <div class="text-2xl font-bold">{{ studyStats.total }}</div>
-              <div class="text-gray-300 text-xs">总词数</div>
+            <!-- 励志语句 -->
+            <div class="bg-gray-900/30 py-4 rounded-2xl center flex-col flex-1 p-4">
+              <div class="text-3xl text-center italic mb-2 en-article-family">{{ sentence.en }}</div>
+              <div class="text-base italic">{{ sentence.cn }}</div>
             </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold">{{ studyStats.time }}</div>
-              <div class="text-gray-300 text-xs">学习时长</div>
-            </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold">{{ studyStats.accuracy }}%</div>
-              <div class="text-gray-300 text-xs">正确率</div>
-            </div>
-          </div>
-
-          <!-- 励志语句 -->
-          <div class="text-center mb-8">
-            <div class="text-lg italic mb-2">Keep going, never give up!</div>
-            <div class="text-sm text-gray-300">坚持就是胜利</div>
           </div>
 
           <!-- 底部品牌信息 -->
-          <div class="absolute bottom-6 left-6 right-6">
+          <div class="bg-gray-900/30 py-4 rounded-2xl p-4">
             <div class="flex justify-between items-end">
-              <div>
-                <div class="font-bold text-lg">Type Words</div>
-                <div class="text-xs text-gray-300">词文记 - 高效英语学习</div>
-                <div class="text-xs text-gray-400">{{ window.location.origin }}</div>
+              <div class="space-y-2">
+                <div class="font-bold text-2xl">Type Words</div>
+                <div class="text-base  ">{{ Origin }}</div>
+                <div class="text-xs  ">一次敲击，一点进步，开源单词学习工具</div>
               </div>
-              <div class="w-16 h-16 bg-white rounded p-2">
-                <div class="w-full h-full bg-black grid grid-cols-8 gap-0.5">
-                  <div v-for="i in 64" :key="i" :class="Math.random() > 0.5 ? 'bg-black' : 'bg-white'"></div>
-                </div>
-              </div>
+              <img src="/imgs/qr.png" class="w-20 w-20 rounded-md overflow-hidden" alt="">
             </div>
           </div>
         </div>
+
+        <img :src="`/imgs/${imgIndex}.jpg`" class="w-full object-cover object-center absolute top-0 " alt="">
       </div>
 
       <!-- 右侧：分享引导区域 -->
-      <div class="flex-1 pt-0 space-y-6">
+      <div class="flex-1 pt-0 ">
         <div class="">
           <div class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
             <span class="mr-2">🎯</span>
@@ -405,35 +253,30 @@ onMounted(generateShareImage)
           </div>
           <div class="flex items-start">
             <span class="mr-2">🔥</span>
-            分享你的战绩，收获朋友们的点赞和认可，让你的朋友圈也掀起一股英语学习的热潮！
+            分享你的学习记录，收获朋友们的点赞和认可，让你的朋友圈也掀起一股英语学习的热潮！
           </div>
         </div>
 
-        <!-- 个性化装扮 -->
-        <div
-            class="flex items-center justify-between px-6 py-3 bg-gray-200 rounded-lg cp  hover:bg-gray-100 transition-all duration-200">
-          <div
-              @click="changeBackground"
-              class="flex items-center gap-2">
+        <div class="space-y-4 mt-30">
+          <!-- 个性化装扮 -->
+          <div @click="changeBackground"
+               class="flex items-center justify-start gap-space px-6 py-3 bg-gray-200 rounded-lg cp  hover:bg-gray-300 transition-all duration-200">
             <IconMdiSparkles class="w-4 h-4 text-yellow-500"/>
             换个背景
           </div>
-          <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">随心装扮</span>
-        </div>
 
-        <!-- 分享战绩 -->
-        <div
-            @click="copyImageToClipboard"
-            class="flex items-center justify-start gap-space px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white cp rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200">
-          <IconFluentCopy20Regular class="w-5 h-5"/>
-          <span class="font-medium">复制到剪贴板</span>
-        </div>
+          <!-- 分享战绩 -->
+          <div @click="copyImageToClipboard"
+               class="flex items-center justify-start gap-space px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white cp rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200">
+            <IconFluentCopy20Regular class="w-5 h-5"/>
+            <span class="font-medium">复制到剪贴板</span>
+          </div>
 
-        <div
-            @click="downloadImage"
-            class="flex items-center justify-start gap-space px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white cp rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200">
-          <IconFluentArrowDownload20Regular class="w-5 h-5"/>
-          <span class="font-medium">保存高清海报</span>
+          <div @click="downloadImage"
+               class="flex items-center justify-start gap-space px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white cp rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200">
+            <IconFluentArrowDownload20Regular class="w-5 h-5"/>
+            <span class="font-medium">保存高清海报</span>
+          </div>
         </div>
       </div>
     </div>
@@ -484,5 +327,9 @@ a {
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+.stat-card {
+  @apply text-center bg-gray-900/30 py-4 rounded-2xl;
 }
 </style>

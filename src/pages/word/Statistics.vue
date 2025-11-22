@@ -134,6 +134,7 @@ calcWeekList(); // 新增：计算本周学习记录
 
 <template>
   <Dialog
+      v-model="model"
       :close-on-click-bg="false"
       :header="false"
       :keyboard="false"

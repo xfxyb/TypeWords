@@ -5,7 +5,7 @@ import {useBaseStore} from "@/stores/base.ts";
 import {useSettingStore} from "@/stores/setting.ts";
 import {usePlayBeep, usePlayCorrect, usePlayKeyboardAudio} from "@/hooks/sound.ts";
 import {emitter, EventKey, useEvents} from "@/utils/eventBus.ts";
-import {_dateFormat, _nextTick, msToHourMinute, total} from "@/utils";
+import { _dateFormat, _nextTick, isMobile, msToHourMinute, total } from "@/utils";
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
 import ContextMenu from '@imengyu/vue3-context-menu'
 import BaseButton from "@/components/BaseButton.vue";
@@ -19,7 +19,6 @@ import nlp from "compromise/three";
 import {nanoid} from "nanoid";
 import {usePracticeStore} from "@/stores/practice.ts";
 import {PracticeSaveArticleKey} from "@/config/env.ts";
-import useMobile from "@/hooks/useMobile.ts";
 
 interface IProps {
   article: Article,
@@ -86,7 +85,7 @@ const {
 const store = useBaseStore()
 const settingStore = useSettingStore()
 const statStore = usePracticeStore()
-const isMobile = useMobile()
+const isMob = isMobile()
 
 watch([() => sectionIndex, () => sentenceIndex, () => wordIndex, () => stringIndex], ([a, b, c,]) => {
   localStorage.setItem(PracticeSaveArticleKey.key, JSON.stringify({
@@ -184,7 +183,7 @@ function checkCursorPosition(a = sectionIndex, b = sentenceIndex, c = wordIndex)
 function checkTranslateLocation() {
   // console.log('checkTranslateLocation')
   return new Promise<void>(resolve => {
-    if (isMobile) {
+    if (isMob) {
       resolve()
       return
     }
@@ -213,7 +212,7 @@ function checkTranslateLocation() {
 }
 
 function focusMobileInput() {
-  if (!isMobile) return
+  if (!isMob) return
   mobileInputRef?.focus()
 }
 
@@ -230,7 +229,7 @@ function processMobileCharacter(char: string) {
 }
 
 function handleMobileInput(event: Event) {
-  if (!isMobile) return
+  if (!isMob) return
   const target = event.target as HTMLInputElement
   const value = target?.value ?? ''
   if (!value) return
@@ -241,7 +240,7 @@ function handleMobileInput(event: Event) {
 }
 
 function handleMobileBeforeInput(event: InputEvent) {
-  if (!isMobile) return
+  if (!isMob) return
   if (event.inputType === 'deleteContentBackward') {
     event.preventDefault()
     del()
@@ -570,7 +569,7 @@ onMounted(() => {
     wrong = input = ''
   })
   emitter.on(EventKey.onTyping, onTyping)
-  if (isMobile) {
+  if (isMob) {
     focusMobileInput()
   }
 })
@@ -600,7 +599,7 @@ const currentPractice = inject('currentPractice', [])
 <template>
   <div class="typing-article" ref="typeArticleRef" @click="focusMobileInput">
     <input
-        v-if="isMobile"
+        v-if="isMob"
         ref="mobileInputRef"
         class="mobile-input"
         type="text"
@@ -664,7 +663,7 @@ const currentPractice = inject('currentPractice', [])
                   </span>
                   <span
                       class="sentence-translate-mobile"
-                      v-if="isMobile && settingStore.translate && sentence.translate">
+                      v-if="isMob && settingStore.translate && sentence.translate">
                     {{ sentence.translate }}
                   </span>
                 </span>

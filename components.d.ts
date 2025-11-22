@@ -153,11 +153,3 @@ declare module 'vue' {
     WordList: typeof import('./src/components/list/WordList.vue')['default']
   }
 }
-e')['default']
-    Toast: typeof import('./src/components/base/toast/Toast.vue')['default']
-    Tooltip: typeof import('./src/components/base/Tooltip.vue')['default']
-    VolumeIcon: typeof import('./src/components/icon/VolumeIcon.vue')['default']
-    WordItem: typeof import('./src/components/WordItem.vue')['default']
-    WordList: typeof import('./src/components/list/WordList.vue')['default']
-  }
-}

@@ -4,7 +4,7 @@ import { DictId } from "@/types/types.ts";
 import BasePage from "@/components/BasePage.vue";
 import { computed, onMounted, reactive, ref, shallowReactive } from "vue";
 import { useRuntimeStore } from "@/stores/runtime.ts";
-import { _getDictDataByUrl, _nextTick, convertToWord, loadJsLib, useNav } from "@/utils";
+import { _getDictDataByUrl, _nextTick, convertToWord, isMobile, loadJsLib, useNav } from "@/utils";
 import { nanoid } from "nanoid";
 import BaseIcon from "@/components/BaseIcon.vue";
 import BaseTable from "@/components/BaseTable.vue";
@@ -28,13 +28,12 @@ import { useSettingStore } from "@/stores/setting.ts";
 import { MessageBox } from "@/utils/MessageBox.tsx";
 import { AppEnv, Origin, PracticeSaveWordKey } from "@/config/env.ts";
 import { detail } from "@/apis";
-import useMobile from "@/hooks/useMobile.ts";
 
 const runtimeStore = useRuntimeStore()
 const base = useBaseStore()
 const router = useRouter()
 const route = useRoute()
-const isMobile = useMobile()
+const isMob = isMobile()
 
 let loading = $ref(false)
 
@@ -160,20 +159,20 @@ function word2Str(word) {
 function editWord(word) {
   isOperate = true
   wordForm = word2Str(word)
-  if (isMobile) activeTab = 'edit'
+  if (isMob) activeTab = 'edit'
 }
 
 function addWord() {
   // setTimeout(wordListRef?.scrollToBottom, 100)
   isOperate = true
   wordForm = getDefaultFormWord()
-  if (isMobile) activeTab = 'edit'
+  if (isMob) activeTab = 'edit'
 }
 
 function closeWordForm() {
   isOperate = false
   wordForm = getDefaultFormWord()
-  if (isMobile) activeTab = 'list'
+  if (isMob) activeTab = 'list'
 }
 
 let isEdit = $ref(false)
@@ -395,7 +394,7 @@ defineRender(() => {
                 <div class="line my-3"></div>
 
                 {/* 移动端标签页导航 */}
-                {isMobile && isOperate && (
+                {isMob && isOperate && (
                     <div class="tab-navigation mb-3">
                       <div
                           class={`tab-item ${activeTab === 'list' ? 'active' : ''}`}
@@ -413,7 +412,7 @@ defineRender(() => {
                 )}
 
                 <div class="flex flex-1 overflow-hidden content-area">
-                  <div class={`word-list-section ${isMobile && isOperate && activeTab !== 'list' ? 'mobile-hidden' : ''}`}>
+                  <div class={`word-list-section ${isMob && isOperate && activeTab !== 'list' ? 'mobile-hidden' : ''}`}>
                     <BaseTable
                         ref={tableRef}
                         class="h-full"
@@ -462,7 +461,7 @@ defineRender(() => {
                   </div>
                   {
                     isOperate ? (
-                        <div class={`edit-section flex-1 flex flex-col ${isMobile && activeTab !== 'edit' ? 'mobile-hidden' : ''}`}>
+                        <div class={`edit-section flex-1 flex flex-col ${isMob && activeTab !== 'edit' ? 'mobile-hidden' : ''}`}>
                           <div class="common-title">
                             {wordForm.id ? '修改' : '添加'}单词
                           </div>
